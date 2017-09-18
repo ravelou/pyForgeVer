@@ -105,7 +105,7 @@ class Server():
 
     
     def change_config_file(self, config_file,
-                           new_config_file='new.config.devnet.json',
+                           new_config_file,
                            passphrase=''):
         """Function to put the passphrase into the main config file. Usually config.mainnet.json
         config_file: main config file to be change
@@ -114,13 +114,14 @@ class Server():
         """
 
         r_config_file = open(config_file, "r")
-        config_json = api.ArkyDict(json.loads(r_config_file.read()))
-        config_json['forging']['secret'][0] = passphrase
+        
+        config_json = json.loads(r_config_file.read())
+        config_json['forging']['secret'] = passphrase
         with open(new_config_file, 'w', encoding='utf8') as outfile:
             str_ = json.dumps(config_json,
                               indent=2,
                               separators=(',', ': '), ensure_ascii=False)
-            outfile.write(to_unicode(str_))
+            outfile.write(str_)
 
     @classmethod
     def restart_server_node(cls, config_filename, arknode_dir_path=\
@@ -132,10 +133,11 @@ class Server():
         """
         try:
             p = subprocess.run(["forever", "stop", "{0}/app.js".format(arknode_dir_path)],
-                               stdout=subprocess.PIPE, check=True)
-        except OSError:
-            print("The was an error stopping ark-node : {0}".format(p.stdout))
-            return OSError.__cause__
+                               stdout=subprocess.PIPE, check=False)
+        except Exception:
+            pass
+        #     print("The was an error stopping ark-node : {0}".format(p.stdout))
+        #     return OSError.__cause__
         os.chdir(arknode_dir_path)
         r = subprocess.run(['forever', 'start', 'app.js', '--config', config_filename,
                             '--genesis', 'genesisBlock.{0}.json'.format(cls.file_suffix)],

@@ -102,3 +102,4 @@ ENV/
 test.py
 .vscode/
 data.json
+new.config.devnet.json
