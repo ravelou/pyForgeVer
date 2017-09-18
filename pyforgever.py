@@ -7,20 +7,6 @@ import subprocess
 
 from arky import api
 
-try:
-    to_unicode = unicode
-except NameError:
-    to_unicode = str
-
-# API_PORT = 4002  # 4001 for mainnet, 4002 for devnet
-# if API_PORT == 4001:
-#     SERVER_NETWORK = "ark"
-#     FILE_SUFFIX = 'mainnet'
-# elif API_PORT == 4002:
-#     SERVER_NETWORK = "dark"
-#     FILE_SUFFIX = 'devnet'
-
-
 class Server():
     """
     Server class
@@ -50,10 +36,11 @@ class Server():
     @classmethod
     def get_network(cls, server_port):
         """Initialize global variable for the class"""
-        for (name,config) in cls.networks.items():
+        for (name, config) in cls.networks.items():
             if server_port == config['port']:
                 cls.port = config['port']
                 cls.file_suffix = config['file_suffix']
+                cls.network = name
 
 
     def __init__(self, server_ip, server_port, server_name=None, ):
