@@ -20,18 +20,18 @@ class Server():
 """
     networks = {
         'ark':{
-                'port':4001,
-                'file_suffix':'mainnet'
+            'port':4001,
+            'file_suffix':'mainnet'
         },
         'dark':{
-                'port':4002,
-                'file_suffix':'devnet'
+            'port':4002,
+            'file_suffix':'devnet'
         }
     }
 
-    network='dark'
-    port=4002
-    file_suffix='devnet'
+    network = 'dark'
+    port = 4002
+    file_suffix = 'devnet'
 
     @classmethod
     def get_network(cls, server_port):
@@ -43,7 +43,7 @@ class Server():
                 cls.network = name
 
 
-    def __init__(self, server_ip, server_port, server_name=None, ):
+    def __init__(self, server_ip, server_port, server_name=None):
         if not server_name:
             self.server_name = server_ip
         else:
@@ -57,7 +57,7 @@ class Server():
             api.use(self.__class__.network, custom_seed=self.server_seed)
             self.server_blockchain_height = api.Block.getBlockchainHeight()[
                 'height']
-        except:
+        except api.NetworkError:
             print("There was an error loading the server")
 
     def __str__(self):
@@ -67,23 +67,20 @@ class Server():
         return json.dumps({'Name': self.server_name, 'ServerSeed': self.server_seed,
                            'serverBlockchainHeight': self.server_blockchain_height},
                           sort_keys=True, indent=2)
-        # return str({'Name': self.server_name, 'ServerSeed': self.server_seed,
-        #            'serverBlockchainHeight': self.server_blockchain_height})
+
 
     def update_server_blockchain_height(self):
         """update the server blockchain height\n
         return:    server_blockchain_height\n
         rtype:    int\n"""
-        if api.cfg.__URL_BASE__ == self.server_seed:
-            self.server_blockchain_height = api.Block.getBlockchainHeight()[
-                'height']
-        else:
+        if api.cfg.__URL_BASE__ != self.server_seed:
             api.use(self.__class__.network, custom_seed=self.server_seed)
-            self.server_blockchain_height = api.Block.getBlockchainHeight()[
-                'height']
+        self.server_blockchain_height = api.Block.getBlockchainHeight()[
+            'height']
+
         return int(self.server_blockchain_height)
 
-    
+
     def check_other_server_height(self, other_server):
         """To check the height of another server on the same port
         rtype: int"""
@@ -103,8 +100,8 @@ class Server():
         config_json = api.ArkyDict = json.loads(r_config_file.read())
         return config_json['forging']['secret'][0]
 
-    
-    def change_config_file(self, config_file,
+    @staticmethod
+    def change_config_file(config_file,
                            new_config_file,
                            passphrase=''):
         """Function to put the passphrase into the main config file. Usually config.mainnet.json
@@ -114,7 +111,6 @@ class Server():
         """
 
         r_config_file = open(config_file, "r")
-        
         config_json = json.loads(r_config_file.read())
         config_json['forging']['secret'] = passphrase
         with open(new_config_file, 'w', encoding='utf8') as outfile:
@@ -131,13 +127,8 @@ class Server():
                         usually config.[mainnet/devnet].json
         arknode_dir_path: the path where your app.js, config json file are
         """
-        try:
-            p = subprocess.run(["forever", "stop", "{0}/app.js".format(arknode_dir_path)],
-                               stdout=subprocess.PIPE, check=False)
-        except Exception:
-            pass
-        #     print("The was an error stopping ark-node : {0}".format(p.stdout))
-        #     return OSError.__cause__
+        subprocess.run(["forever", "stop", "{0}/app.js".format(arknode_dir_path)],
+                       stdout=subprocess.PIPE, check=False)
         os.chdir(arknode_dir_path)
         r = subprocess.run(['forever', 'start', 'app.js', '--config', config_filename,
                             '--genesis', 'genesisBlock.{0}.json'.format(cls.file_suffix)],
