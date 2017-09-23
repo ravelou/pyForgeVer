@@ -4,10 +4,13 @@
 import json
 import os
 import subprocess
+import logging
 
 from arky import api
+logging.basicConfig(filename='{0}/test_log.log'.format(os.getenv('HOME')), level=logging.DEBUG)
+logger = logging.getLogger()
 
-class Server():
+class Server(object):
     """
     Server class
     server_ip: just the ip of the server
@@ -41,6 +44,8 @@ class Server():
                 cls.port = config['port']
                 cls.file_suffix = config['file_suffix']
                 cls.network = name
+        logger.info("class port : %s, class file_suffix = %s, class network = %s",
+                     cls.port, cls.file_suffix, cls.network)
 
 
     def __init__(self, server_ip, server_port, server_name=None):
@@ -59,6 +64,7 @@ class Server():
                 'height']
         except api.NetworkError:
             print("There was an error loading the server")
+        logger.info(self.__repr__())
 
     def __str__(self):
         return self.__repr__()
@@ -97,8 +103,8 @@ class Server():
         """
 
         r_config_file = open(config_file, "r")
-        config_json = api.ArkyDict = json.loads(r_config_file.read())
-        return config_json['forging']['secret'][0]
+        config_json = json.loads(r_config_file.read())
+        return config_json['forging']['secret']
 
     @staticmethod
     def change_config_file(config_file,
@@ -114,10 +120,11 @@ class Server():
         config_json = json.loads(r_config_file.read())
         config_json['forging']['secret'] = passphrase
         with open(new_config_file, 'w', encoding='utf8') as outfile:
-            str_ = json.dumps(config_json,
-                              indent=2,
-                              separators=(',', ': '), ensure_ascii=False)
-            outfile.write(str_)
+            json.dump(config_json, outfile, indent=2)
+            # str_ = json.dumps(config_json,
+            #                   indent=2,
+            #                   separators=(',', ': '), ensure_ascii=False)
+            # outfile.write(str_)
 
     @classmethod
     def restart_server_node(cls, config_filename, arknode_dir_path=\
@@ -133,4 +140,4 @@ class Server():
         r = subprocess.run(['forever', 'start', 'app.js', '--config', config_filename,
                             '--genesis', 'genesisBlock.{0}.json'.format(cls.file_suffix)],
                            stdout=subprocess.PIPE)
-        print(r.stdout)
+        logger.debug(r.stdout)
