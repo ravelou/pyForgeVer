@@ -6,9 +6,12 @@ import os
 import subprocess
 import logging
 
-from arky import api
-logging.basicConfig(filename='{0}/test_log.log'.format(os.getenv('HOME')), level=logging.DEBUG)
-logger = logging.getLogger()
+from arky import rest
+logging.basicConfig(
+    filename='{0}/test_log.log'.format(os.getenv('HOME')), level=logging.DEBUG)
+# logging = logging.getlogging()
+# logging.basicConfig(filename='{0}/test_log.log'.format(os.getenv('HOME')), level=logging.DEBUG)
+
 
 class Server(object):
     """
@@ -22,13 +25,13 @@ class Server(object):
     rtype: so\n
 """
     networks = {
-        'ark':{
-            'port':4001,
-            'file_suffix':'mainnet'
+        'ark': {
+            'port': 4001,
+            'file_suffix': 'mainnet'
         },
-        'dark':{
-            'port':4002,
-            'file_suffix':'devnet'
+        'dark': {
+            'port': 4002,
+            'file_suffix': 'devnet'
         }
     }
 
@@ -44,9 +47,8 @@ class Server(object):
                 cls.port = config['port']
                 cls.file_suffix = config['file_suffix']
                 cls.network = name
-        logger.info("class port : %s, class file_suffix = %s, class network = %s",
+        logging.info("class port : %s, class file_suffix = %s, class network = %s",
                      cls.port, cls.file_suffix, cls.network)
-
 
     def __init__(self, server_ip, server_port, server_name=None):
         if not server_name:
@@ -59,13 +61,12 @@ class Server(object):
             str(self.server_ip) + ':' + str(self.server_port)
         self.__class__.get_network(server_port)
         try:
-            api.use(self.__class__.network, custom_seed=self.server_seed)
-            self.server_blockchain_height = api.Block.getBlockchainHeight()[
+            rest.use(self.__class__.network, custom_seed=self.server_seed)
+            self.server_blockchain_height = rest.GET.api.blocks.getHeight()[
                 'height']
-        except api.NetworkError:
-            print("There was an error loading the server")
-        logger.info(self.__repr__())
-
+        # except rest.cfg..NetworkError:
+        #    print("There was an error loading the server")
+        # logging.info(self.__repr__())
     def __str__(self):
         return self.__repr__()
 
@@ -74,24 +75,23 @@ class Server(object):
                            'serverBlockchainHeight': self.server_blockchain_height},
                           sort_keys=True, indent=2)
 
-
     def update_server_blockchain_height(self):
         """update the server blockchain height\n
         return:    server_blockchain_height\n
         rtype:    int\n"""
-        if api.cfg.__URL_BASE__ != self.server_seed:
-            api.use(self.__class__.network, custom_seed=self.server_seed)
-        self.server_blockchain_height = api.Block.getBlockchainHeight()[
+        if rest.cfg.__URL_BASE__ != self.server_seed:
+            rest.use(self.__class__.network, custom_seed=self.server_seed)
+        self.server_blockchain_height = rest.GET.api.blocks.getHeight()[
             'height']
 
         return int(self.server_blockchain_height)
-
 
     def check_other_server_height(self, other_server):
         """To check the height of another server on the same port
         rtype: int"""
         if isinstance(other_server, Server):
-            api.use(self.__class__.network, custom_seed=other_server.server_seed)
+            rest.use(self.__class__.network,
+                     custom_seed=other_server.server_seed)
             other_server.update_server_blockchain_height()
             return other_server
         return 0
@@ -127,8 +127,7 @@ class Server(object):
             # outfile.write(str_)
 
     @classmethod
-    def restart_server_node(cls, config_filename, arknode_dir_path=\
-                            "{0}/ark-node".format(os.getenv('HOME'))):
+    def restart_server_node(cls, config_filename, arknode_dir_path="{0}/ark-node".format(os.getenv('HOME'))):
         """method to restart the node from the current server
         config_filename:the name of the config file you want to use to start the node\
                         usually config.[mainnet/devnet].json
@@ -140,4 +139,4 @@ class Server(object):
         r = subprocess.run(['forever', 'start', 'app.js', '--config', config_filename,
                             '--genesis', 'genesisBlock.{0}.json'.format(cls.file_suffix)],
                            stdout=subprocess.PIPE)
-        logger.debug(r.stdout)
+        logging.debug(r.stdout)
