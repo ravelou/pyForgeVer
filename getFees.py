@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pytz
 
 import arky.rest as arkApi
-dateDebut = datetime.now(pytz.UTC) - timedelta(days=1)
+dateDebut = datetime.now(pytz.UTC) - timedelta(days=0.5)
 
 limitRecord = 100
 sumFees = 0
@@ -18,17 +18,18 @@ print(arkApi.GET.api.delegates.forging.getForgedByAccount(generatorPublicKey=del
 
 while True:
     while True:
-        TRANSACTION = arkApi.GET.api.blocks(limit=limitRecord, generatorPublicKey=delegatePublicKey, offset=offset_rqst)
-        if TRANSACTION['success']:
+        blocksRequest = arkApi.GET.api.blocks(limit=limitRecord, generatorPublicKey=delegatePublicKey, offset=offset_rqst)
+        if blocksRequest['success']:
+            forgedBlocksRequested = blocksRequest['blocks']
             break
-    if arkApi.slots.getRealTime(TRANSACTION['blocks'][limitRecord-1]['timestamp']) < dateDebut:
-        for i, elt in enumerate(TRANSACTION['blocks']):
+    if arkApi.slots.getRealTime(forgedBlocksRequested[limitRecord-1]['timestamp']) < dateDebut:
+        for i, elt in enumerate(forgedBlocksRequested):
             if arkApi.slots.getRealTime(elt['timestamp']) < dateDebut:
-                TRANSACTION['blocks'].remove(elt)
-        forgedBlocks += TRANSACTION['blocks']
+                forgedBlocksRequested.remove(elt)
+        forgedBlocks += forgedBlocksRequested
         break
     else:
-        forgedBlocks += TRANSACTION['blocks']
+        forgedBlocks += forgedBlocksRequested
         offset_rqst += limitRecord + 1
 
 
@@ -37,4 +38,4 @@ for i, elt in enumerate(forgedBlocks):
     sumFees += elt['totalFee']
     print("{0} : {1} ark".format(arkApi.slots.getRealTime(elt['timestamp']),elt['totalFee']/100000000))
 
-print("Nombre d'arks forgés en frais de transaction : {0}".format(sumFees/100000000))
+print("Nombre d'arks forgés en frais de forgedBlocksRequested : {0}".format(sumFees/100000000))
