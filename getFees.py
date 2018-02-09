@@ -91,4 +91,3 @@ beginTime = datetime(int(dateSplit[2]),int(dateSplit[1]),int(dateSplit[0]),int(t
 fees = getFeesBetweenDates(beginTime, delegate='ravelou')
 
 print("Nombre d'arks forgés en frais entre le {0} et le {1} : {2}".format(beginTime, datetime.now(pytz.UTC),fees/100000000))
-#getSelfTransaction()
