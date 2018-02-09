@@ -25,8 +25,7 @@ def getSelfTransaction(delegate='ravelou'):
         sum+=elt
     print(sum)
     
-##*/
-def containsAValueAfterDateTime(forgedBlocksRequested, beginDatetime):
+def containsAValueAfterDateTime(forgedBlocksRequested, beginDatetime, endDatetime):
     """
     to be used, the arky.rest API has to be initialized
     forgedBlocksRequested : list containing the transactions asked from arky.rest API
@@ -55,18 +54,21 @@ def getFeesBetweenDates(beginDatetime, endDatetime=datetime.now(pytz.UTC), deleg
     delegatePublicKey = arkApi.GET.api.delegates.get(username=delegate)['delegate']['publicKey']
 
     forgedBlocksRequested = []
-    while containsAValueAfterDateTime(forgedBlocksRequested,beginDatetime):
-           
+    while containsAValueAfterDateTime(forgedBlocksRequested,beginDatetime,endDatetime):
+         
         blocksRequest = {}
         while not blocksRequest.get("success", False):
             blocksRequest = arkApi.GET.api.blocks(limit=limitRecord, generatorPublicKey=delegatePublicKey, offset=offset_rqst)
         
         forgedBlocksRequested = blocksRequest['blocks']
-        if arkApi.slots.getRealTime(forgedBlocksRequested[-1]['timestamp']) < beginDatetime:
+        if  (arkApi.slots.getRealTime(forgedBlocksRequested[-1]['timestamp']) <= endDatetime 
+            or arkApi.slots.getRealTime(forgedBlocksRequested[0]['timestamp']) >= beginDatetime):
             for i, elt in enumerate(forgedBlocksRequested):
-                if arkApi.slots.getRealTime(elt['timestamp']) >= beginDatetime:
-                    forgedBlocks.append(elt)    
-        else:
+                if (arkApi.slots.getRealTime(elt['timestamp']) >= beginDatetime 
+                    and arkApi.slots.getRealTime(elt['timestamp']) <= endDatetime) :
+                        forgedBlocks.append(elt)
+        elif (arkApi.slots.getRealTime(forgedBlocksRequested[0]['timestamp']) <= endDatetime 
+            and arkApi.slots.getRealTime(forgedBlocksRequested[-1]['timestamp']) >= beginDatetime):
             forgedBlocks += forgedBlocksRequested
         offset_rqst += limitRecord + 1
 
