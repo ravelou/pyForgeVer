@@ -38,14 +38,13 @@ def containsAValueAfterDateTime(forgedBlocksRequested, beginDatetime, endDatetim
     except IndexError:
         return True
 
-def getFeesBetweenDates(beginDatetime, endDatetime=datetime.now(pytz.UTC), delegate='ravelou'):
+def getBlocksBetweenDates(beginDatetime, endDatetime=datetime.now(pytz.UTC), delegate='ravelou'):
     """
     beginDatetime : the Datetime from where you want to start the counting fees 
     beginTimetime : not use
     delegate : delegate name
     """
     limitRecord = 100       #100 : max record you can ask to ark api
-    sumFees = 0             #fees from transaction forging
     offset_rqst = 0         #index used to get more than limit_Record blocks from the ARK API
     forgedBlocks = []       #forged blocks before now and after beginDatetime
 
@@ -71,10 +70,7 @@ def getFeesBetweenDates(beginDatetime, endDatetime=datetime.now(pytz.UTC), deleg
             and arkApi.slots.getRealTime(forgedBlocksRequested[-1]['timestamp']) >= beginDatetime):
             forgedBlocks += forgedBlocksRequested
         offset_rqst += limitRecord + 1
-
-    for i, elt in enumerate(forgedBlocks):
-        sumFees += elt['totalFee']#elt['reward']
-    return sumFees
+    return forgedBlocks
 
 
 """
@@ -89,7 +85,11 @@ dateSplit = dateInput.split("/")
 timeSplit = timeInput.split(":")
 
 beginTime = datetime(int(dateSplit[2]),int(dateSplit[1]),int(dateSplit[0]),int(timeSplit[0]),int(timeSplit[1]),0,0,tzinfo=pytz.UTC)
-
-fees = getFeesBetweenDates(beginTime, delegate='ravelou')
-
+fees = 0
+rewards = 0
+selectedBlocks = getBlocksBetweenDates(beginTime)
+for i, elt in enumerate(selectedBlocks):
+    fees += elt['totalFee']#elt['reward']
+    rewards += elt['reward'] 
 print("Nombre d'arks forgés en frais entre le {0} et le {1} : {2}".format(beginTime, datetime.now(pytz.UTC),fees/100000000))
+print("Nombre d'arks forgés entre le {0} et le {1} : {2}".format(beginTime, datetime.now(pytz.UTC),rewards/100000000))
