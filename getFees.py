@@ -24,7 +24,7 @@ def getSelfTransaction(delegate='ravelou'):
     for elt in selfTransactions:
         sum+=elt
     print(sum)
-    
+
 def containsAValueAfterDateTime(forgedBlocksRequested, beginDatetime, endDatetime):
     """
     to be used, the arky.rest API has to be initialized
@@ -72,24 +72,33 @@ def getBlocksBetweenDates(beginDatetime, endDatetime=datetime.now(pytz.UTC), del
         offset_rqst += limitRecord + 1
     return forgedBlocks
 
-
 """
     =============
     |MainProgram|
     =============
 """
-dateInput = '04/02/2018'#input('Date de début (jj/mm/aaaa) : ')
-timeInput = '22:09'#input('Heure de début (hh:mm) : ')
+DateInputStart = '18/02/2018'#input('Date de début (jj/mm/aaaa) : ')
+TimeInputStart = '23:59'#input('Heure de début (hh:mm) : ')
+DateInputEnd = '26/02/2018'
+TimeInputEnd = '7:55'
 
-dateSplit = dateInput.split("/")
-timeSplit = timeInput.split(":")
+dateSplitStart = DateInputStart.split("/")
+timeSplitStart = TimeInputStart.split(":")
+dateSplitEnd = DateInputEnd.split("/")
+timeSplitEnd = TimeInputEnd.split(":")
 
-beginTime = datetime(int(dateSplit[2]),int(dateSplit[1]),int(dateSplit[0]),int(timeSplit[0]),int(timeSplit[1]),0,0,tzinfo=pytz.UTC)
+beginTime = datetime(int(dateSplitStart[2]),int(dateSplitStart[1]),int(dateSplitStart[0]),int(timeSplitStart[0]),int(timeSplitStart[1]),0,0,tzinfo=pytz.UTC)
+endTime = datetime(int(dateSplitEnd[2]),int(dateSplitEnd[1]),int(dateSplitEnd[0]),int(timeSplitEnd[0]),int(timeSplitEnd[1]),0,0,tzinfo=pytz.UTC)
 fees = 0
 rewards = 0
-selectedBlocks = getBlocksBetweenDates(beginTime)
+selectedBlocks = getBlocksBetweenDates(beginTime,endTime)
 for i, elt in enumerate(selectedBlocks):
-    fees += elt['totalFee']#elt['reward']
-    rewards += elt['reward'] 
+    fees += elt['totalFee']
+    rewards += elt['reward']
+    
+
+print(arkApi.slots.getRealTime(selectedBlocks[-1]['timestamp']))
+print(arkApi.slots.getRealTime(selectedBlocks[0]['timestamp']))
+
 print("Nombre d'arks forgés en frais entre le {0} et le {1} : {2}".format(beginTime, datetime.now(pytz.UTC),fees/100000000))
 print("Nombre d'arks forgés entre le {0} et le {1} : {2}".format(beginTime, datetime.now(pytz.UTC),rewards/100000000))
